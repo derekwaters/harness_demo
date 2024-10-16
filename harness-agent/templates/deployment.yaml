@@ -267,7 +267,6 @@ spec:
               cpu: "1"
       securityContext:
         runAsNonRoot: true
-        runAsUser: 999
         seccompProfile:
           type: RuntimeDefault
       serviceAccountName: argocd-redis
@@ -673,7 +672,7 @@ spec:
             - mountPath: /tmp
               name: tmp
           securityContext:
-            allowPrivilegeEscalation: false
+            allowPrivilegeEscalation: true
             capabilities:
               drop:
                 - ALL
