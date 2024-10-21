@@ -1,0 +1,101 @@
+---
+- name: Can I do Harness things
+  hosts: all
+  gather_facts: false
+  connection: local
+  collections:
+    - karcadia.harness
+
+  vars:
+    org_name: default
+    project_name: notesappexample
+    harness_account: "HARNESS_ACCOUNTID"
+    harness_token: "HARNESS_TOKEN"
+    harness_git_connector: "HARNESS_GIT_CONNECTOR"
+
+  tasks:
+    - name: Check the env
+      karcadia.harness.env_info:
+        org: "{{ org_name }}"
+        project: "{{ project_name }}"
+        account_id: "{{ harness_account }}"
+        api_key: "{{ harness_token }}"
+      register: harness_data
+
+    - name: Debug it
+      ansible.builtin.debug:
+        var: harness_data
+
+    - name: Create a Harness Project
+      karcadia.harness.project:
+        identifier: securesupplychain
+        org: "{{ org_name }}"
+        name: secure-supply-chain
+        description: Project demonstrating integration of secure supply chain
+        state: present
+        tags:
+          purpose: demo
+        account_id: "{{ harness_account }}"
+        api_key: "{{ harness_token }}"
+      register: harness_project
+
+    - name: Debug it
+      ansible.builtin.debug:
+        var: harness_project
+
+
+    - name: Create a Harness Pipeline
+      karcadia.harness.pipeline:
+        identifier: supplypipeline
+        org: "{{ org_name }}"
+        project: securesupplychain
+        name: "supply-chain-pipeline"
+        description: Pipeline with supply chain bits
+        state: present
+        tags:
+          purpose: demo
+        git_details:
+          connector_ref: "{{ harness_git_connector }}"
+        pipeline_yaml:
+          pipeline:
+            name: testpipeline
+            identifier: testpipeline
+            projectIdentifier: securesupplychain
+            orgIdentifier: default
+            tags: {}
+            properties:
+              ci:
+                codebase:
+                  connectorRef: "{{ harness_git_connector }}"
+                  repoName: derekwaters/taskshifter-v1.git
+                  build: <+input>
+            stages:
+              - stage:
+                  name: buildit
+                  identifier: buildit
+                  description: ""
+                  type: CI
+                  spec:
+                    cloneCodebase: true
+                    platform:
+                      os: Linux
+                      arch: Amd64
+                    runtime:
+                      type: Cloud
+                      spec: {}
+                    execution:
+                      steps:
+                        - step:
+                            type: Run
+                            name: make TaskShifter Code
+                            identifier: make_TaskShifter_Code
+                            spec:
+                              shell: Bash
+                              command: make TaskShifter.mak
+        account_id: "{{ harness_account }}"
+        api_key: "{{ harness_token }}"
+      register: harness_pipeline
+
+    - name: Debug it
+      ansible.builtin.debug:
+        var: harness_pipeline
